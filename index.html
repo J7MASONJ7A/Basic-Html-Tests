@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Google Giggles</title>
+<style>
+:root{--blue:#4285f4;--red:#ea4335;--yellow:#fbbc04;--green:#34a853;--night:#0a0a14}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{display:grid;place-items:center;color:#fff;background:radial-gradient(circle at 50% -10%,#232a55,var(--night) 65%);font:14px/1.35 "Google Sans","Product Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+.stage{position:relative;height:min(100dvh,920px);aspect-ratio:9/16;max-width:100vw;background:#000;overflow:hidden;border-radius:26px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px rgba(0,0,0,.6)}
+@media(max-width:520px){.stage{width:100vw;height:100dvh;aspect-ratio:auto;border-radius:0}}
+
+/* top bar */
+header{position:absolute;top:0;left:0;right:0;z-index:6;padding:12px 12px 4px;background:linear-gradient(rgba(0,0,0,.7),transparent)}
+.row{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-.2px}
+.brand svg{width:26px;height:26px}
+.brand .g i{font-style:normal}
+.brand .n{padding:2px 9px 3px;border-radius:99px;background:#fff;color:#111}
+.tools{display:flex;gap:8px}
+.clean header{background:none}
+.clean .brand,.clean .chips,.clean .tools>button:not(#hideBtn),.clean .meta,.clean .rail,.clean .bar{display:none}
+.clean #hideBtn{opacity:.45}
+.round{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);font-size:16px;display:grid;place-items:center}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 0 6px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.14);backdrop-filter:blur(8px)}
+.chip.on{background:#fff;color:#111;font-weight:600}
+
+/* feed */
+#feed{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+#feed::-webkit-scrollbar{display:none}
+.slide{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#000;overflow:hidden}
+.bg{position:absolute;inset:-8%;background:var(--bg) center/cover;filter:blur(10px) brightness(.7);transition:opacity .35s}
+.slide.on .bg{opacity:0}
+.pl,.pl iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.pl iframe{pointer-events:none}
+.tap{position:absolute;inset:0;z-index:2}
+.meta{position:absolute;left:0;right:70px;bottom:0;z-index:3;padding:70px 14px 20px;background:linear-gradient(transparent,rgba(0,0,0,.8));pointer-events:none}
+.meta a{pointer-events:auto;color:#fff;text-decoration:none;font-weight:700;display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.18);margin-bottom:8px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rail{position:absolute;right:10px;bottom:26px;z-index:4;display:flex;flex-direction:column;gap:12px}
+.act{width:54px;padding:9px 0 7px;border-radius:20px;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;gap:2px;transition:background .15s}
+.act .ic{display:grid;transition:transform .2s}
+.act svg,.round svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.act svg{width:27px;height:27px}
+.round svg{width:20px;height:20px}
+.act small{font-size:11px;font-weight:600}
+.act.on{background:var(--yellow);color:#111}
+.act.on .ic{transform:scale(1.25) rotate(-8deg)}
+.bar{position:absolute;left:0;bottom:0;height:4px;width:0;z-index:7;background:linear-gradient(90deg,var(--blue),var(--red),var(--yellow),var(--green))}
+#sheet{position:absolute;left:0;right:0;bottom:0;height:68%;z-index:15;display:flex;flex-direction:column;background:#15172b;border-radius:22px 22px 0 0;transform:translateY(100%);transition:transform .28s;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+#sheet.show{transform:none}
+.sh-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+.sh-head b{font-size:16px}
+.sh-head .round{width:32px;height:32px}
+#shBody{flex:1;overflow-y:auto;padding:4px 16px 20px;overscroll-behavior:contain;color:#b9bcd6}
+.cm{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);color:#fff}
+.cm b{display:block;font-size:12px;color:#9fb8ff}
+.cm p{margin-top:2px;white-space:pre-wrap;overflow-wrap:anywhere}
+.cm small{display:block;margin-top:4px;color:#8b8fb0}
+
+/* messages */
+#msg{position:absolute;inset:0;z-index:5;display:none;place-items:center;text-align:center;padding:40px;color:#c9cbe0}
+#msg.show{display:grid}
+#toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);z-index:30;background:#fff;color:#111;padding:8px 16px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+#toast.show{opacity:1}
+
+/* key gate */
+#gate,#fy,#srch{position:absolute;inset:0;z-index:20;display:none;place-items:center;padding:24px;background:rgba(8,8,16,.94);backdrop-filter:blur(10px)}
+#gate.show,#fy.show,#srch.show{display:grid}
+.card{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-size:24px;letter-spacing:-.4px}
+.card p{color:#b9bcd6;font-size:13px}
+.card input{width:100%;padding:13px 14px;border-radius:14px;border:2px solid #2c3160;background:#12142b;color:#fff;font:inherit}
+.card input:focus{outline:0;border-color:var(--blue)}
+.go{padding:13px;border-radius:14px;background:var(--blue);font-weight:700}
+.ghost{padding:10px;background:none;color:#b9bcd6}
+.addrow{display:flex;gap:8px}
+.addrow input{flex:1;min-width:0}
+.addrow .go{padding:0 18px}
+.go:disabled{opacity:.5}
+.pills{display:flex;flex-wrap:wrap;gap:8px;max-height:34vh;overflow-y:auto}
+.pills:empty::before{content:"Nothing added yet.";color:#8b8fb0}
+.pill{display:flex;align-items:center;gap:6px;padding:5px 5px 5px 12px;border-radius:99px;background:#1c2050;font-weight:600}
+.pill.ch{background:#2f2050}
+.pill button{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.pill svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.round.on{background:var(--yellow);color:#111}
+.tap{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#spd{position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:8;display:none;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);font-weight:700;pointer-events:none}
+#spd.show{display:flex}
+#spd svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:400px){.brand .g{display:none}}
+#srch{place-items:start center;padding-top:110px}
+.chip{display:flex;align-items:center;gap:6px}
+.chip svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chip span{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="stage">
+  <header>
+    <div class="row">
+      <div class="brand">
+        <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#fbbc04"/><path d="M8 12q3-3 6 0M18 12q3-3 6 0" stroke="#3c2a00" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M8 18h16q-1 8-8 8t-8-8z" fill="#3c2a00"/><path d="M11 23q5 3 10 0" fill="none" stroke="#ea4335" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span class="g"><i style="color:#4285f4">G</i><i style="color:#ea4335">o</i><i style="color:#fbbc04">o</i><i style="color:#4285f4">g</i><i style="color:#34a853">l</i><i style="color:#ea4335">e</i></span>
+        <span class="n">Giggles</span>
+      </div>
+      <div class="tools">
+        <button class="round" id="fyBtn" title="Customize"></button>
+        <button class="round" id="autoBtn" title="Autoplay next"></button>
+        <button class="round" id="snd" title="Sound (M)"></button>
+        <button class="round" id="cfg" title="API key"></button>
+        <button class="round" id="hideBtn" title="Hide UI (H)"></button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <div id="feed"></div>
+  <div id="msg"><p id="msgText"></p></div>
+  <div class="bar" id="bar"></div>
+  <div id="spd"></div>
+  <div id="toast"></div>
+
+  <div id="sheet">
+    <div class="sh-head"><b>Comments</b><button class="round" id="shX" title="Close"></button></div>
+    <div id="shBody"></div>
+  </div>
+  <div id="srch">
+    <div class="card">
+      <h2>Search</h2>
+      <div class="addrow"><input id="srchIn" placeholder="Search Shorts" autocomplete="off" spellcheck="false"><button class="go" id="srchGo">Go</button></div>
+      <button class="ghost" id="srchX">Cancel</button>
+    </div>
+  </div>
+  <div id="fy">
+    <div class="card">
+      <h2>Customized</h2>
+      <p>Add hashtags and @channels, as many as you like. The Customized tab shows only videos that match, and For you learns your interests from your channels.</p>
+      <div class="addrow"><input id="fyIn" placeholder="#cats  @channel" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="go" id="fyAdd">Add</button></div>
+      <div class="pills" id="fyList"></div>
+      <button class="go" id="fyDone">Done</button>
+    </div>
+  </div>
+  <div id="gate">
+    <div class="card">
+      <h2>Bring your own key</h2>
+      <p>Paste a YouTube Data API v3 key to load real Shorts. It's saved only in this browser and sent only to Google.</p>
+      <input id="keyIn" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false">
+      <button class="go" id="save">Start giggling</button>
+      <button class="ghost" id="cancel">Cancel</button>
+      <p>If every video says it can't play, serve this file from localhost (<code>python -m http.server</code>) instead of opening it directly. YouTube blocks embeds from file:// pages.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try { return localStorage.getItem(k) } catch { return null } },
+  set(k,v){ try { localStorage.setItem(k,v) } catch {} }
+};
+const feed = $('#feed'), bar = $('#bar');
+const topics = [['For you',''],['Customized',''],['Cats','funny cats'],['Fails','fails'],['Pranks','pranks'],['Animals','funny animals'],['Gaming','gaming funny moments'],['Dance','dance'],['Food','cooking food']];
+const fmt = new Intl.NumberFormat('en',{notation:'compact'});
+const svg = d => `<svg viewBox="0 0 24 24">${d}</svg>`;
+const speaker = '<path d="M4 10v4h3.5L12 18V6L7.5 10z"/>';
+const I = {
+  laugh: svg('<circle cx="12" cy="12" r="9"/><path d="M7.5 10.2q1.5-1.7 3 0M13.5 10.2q1.5-1.7 3 0"/><path d="M7.5 13.5h9a4.5 4.5 0 0 1-9 0z"/>'),
+  chat: svg('<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12z"/>'),
+  share: svg('<path d="M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>'),
+  on: svg(speaker + '<path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>'),
+  off: svg(speaker + '<path d="M16 10l4 4M20 10l-4 4"/>'),
+  key: svg('<circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5L20 3M16 7l2.5 2.5M13.5 9.5L15 11"/>'),
+  tune: svg('<path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/>'),
+  eye: svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  eyeOff: svg('<path d="M3 3l18 18M10.6 5.1A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.7 6.7C3.9 8.5 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/>'),
+  auto: svg('<path d="M7 6l5 5 5-5M7 13l5 5 5-5"/>'),
+  ff: svg('<path d="M5 6l6 6-6 6M13 6l6 6-6 6"/>'),
+  search: svg('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'),
+  x: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+};
+
+let key = store.get('gg_key') || '';
+let topic = 0, query = '', items = [], seen = new Set(), loading = false;
+let cur = -1, player = null, muted = true, ytReady = false, pending = null, actTimer;
+let liked = new Set();
+try { liked = new Set(JSON.parse(store.get('gg_liked') || '[]')) } catch {}
+let auto = store.get('gg_auto') === '1';
+let fy = { tags: [], chans: [] }, fyDirty = false;
+try { const f = JSON.parse(store.get('gg_fy') || 'null'); if (f) fy = { tags: f.tags || [], chans: f.chans || [] }; } catch {}
+const saveFy = () => { fyDirty = true; store.set('gg_fy', JSON.stringify(fy)); };
+
+window.onYouTubeIframeAPIReady = () => { ytReady = true; if (pending !== null) mount(pending); };
+
+/* ---------- UI helpers ---------- */
+function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2200); }
+function say(t){ $('#msgText').textContent = t; $('#msg').classList.toggle('show', !!t); }
+function openGate(){ $('#keyIn').value = key; $('#cancel').style.display = key ? '' : 'none'; $('#gate').classList.add('show'); setTimeout(() => $('#keyIn').focus(), 50); }
+function closeGate(){ $('#gate').classList.remove('show'); }
+
+const sc = document.createElement('button');
+sc.className = 'chip'; sc.dataset.i = '-1';
+sc.onclick = () => { $('#srchIn').value = query; $('#srch').classList.add('show'); setTimeout(() => $('#srchIn').focus(), 50); };
+$('#chips').appendChild(sc);
+function paintSearchChip(){
+  sc.innerHTML = I.search + '<span></span>';
+  sc.lastChild.textContent = topic === -1 && query ? query : 'Search';
+}
+function setTopic(i){
+  topic = i;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', +c.dataset.i === i));
+  paintSearchChip(); reset();
+}
+topics.forEach(([label], i) => {
+  const b = document.createElement('button');
+  b.className = 'chip' + (i === 0 ? ' on' : ''); b.dataset.i = i; b.textContent = label;
+  b.onclick = () => setTopic(i);
+  $('#chips').appendChild(b);
+});
+paintSearchChip();
+
+/* ---------- YouTube Data API ---------- */
+async function yt(path, params){
+  const u = new URL('https://www.googleapis.com/youtube/v3/' + path);
+  u.search = new URLSearchParams({ ...params, key }).toString();
+  const r = await fetch(u);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error?.message || r.statusText);
+  return j;
+}
+const secs = d => { const m = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d) || []; return (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0); };
+
+let tok = {};
+const hasMore = () => (mode() === 'foryou' && fyLive) || Object.values(tok).some(Boolean);
+const mode = () => topic === -1 ? 'search' : topic === 0 ? 'foryou' : topic === 1 ? 'custom' : 'topic';
+const custom = () => mode() === 'custom' && (fy.tags.length || fy.chans.length);
+const MIN_VIEWS = 10000, YEAR = 365 * 864e5;
+const STOP = new Set(['shorts','short','youtubeshorts','youtube','viral','fyp','trending','foryou','foryoupage','subscribe','shortsvideo','shortsfeed','ytshorts','ytshort','video','videos','new','explore','like','follow']);
+const normTag = t => t.toLowerCase().replace(/[^\p{L}\p{N}_]/gu, '');
+function tagsOf(sn){
+  const set = new Set();
+  for (const m of ((sn.title || '') + ' ' + (sn.description || '')).matchAll(/#([\p{L}\p{N}_]+)/gu)) set.add(normTag(m[1]));
+  (sn.tags || []).forEach(t => set.add(normTag(t)));
+  return [...set].filter(t => t.length > 2 && !STOP.has(t));
+}
+let profile = null, fyRot = 0, fyMin = 3, fyLive = false;
+async function getProfile(){
+  const sig = fy.chans.map(c => c.h).sort().join(',');
+  if (profile?.sig === sig) return profile;
+  try { const c = JSON.parse(store.get('gg_profile2') || 'null'); if (c && c.sig === sig && Date.now() - c.at < 3 * 864e5) return (profile = c); } catch {}
+  const lists = await Promise.allSettled(fy.chans.map(c => yt('playlistItems', { part: 'contentDetails', playlistId: c.up, maxResults: 30 })));
+  const ids = lists.filter(r => r.status === 'fulfilled').flatMap(r => r.value.items.map(x => x.contentDetails.videoId));
+  const counts = new Map();
+  for (let i = 0; i < ids.length; i += 50) {
+    const v = await yt('videos', { part: 'snippet,contentDetails', id: ids.slice(i, i + 50).join(',') });
+    v.items.forEach(x => { if (secs(x.contentDetails.duration) <= 180) tagsOf(x.snippet).forEach(t => counts.set(t, (counts.get(t) || 0) + 1)); });
+  }
+  const top = [...counts].sort((a, b) => b[1] - a[1]).slice(0, 60);
+  const pr = { sig, at: Date.now(), tags: top.map(e => e[0]), w: top.map(e => e[1]) };
+  if (pr.tags.length) { profile = pr; store.set('gg_profile2', JSON.stringify(pr)); }
+  return pr;
+}
+function pick3(tags, w){
+  const idx = tags.slice(0, 30).map((_, i) => i), out = [];
+  while (out.length < 3 && idx.length) {
+    let r = Math.random() * idx.reduce((a, i) => a + w[i], 0), k = 0;
+    for (; k < idx.length; k++) { r -= w[idx[k]]; if (r <= 0) break; }
+    out.push(tags[idx.splice(Math.min(k, idx.length - 1), 1)[0]]);
+  }
+  return out;
+}
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+async function searchIds(k, q, strict, extra = {}){
+  if (tok[k] === null) return [];
+  const p = { part: 'snippet', type: 'video', videoDuration: 'short', videoEmbeddable: 'true', maxResults: 30, q, ...extra };
+  if (tok[k]) p.pageToken = tok[k];
+  const s = await yt('search', p);
+  tok[k] = s.nextPageToken || null;
+  return s.items.map(x => ({ id: x.id.videoId, strict }));
+}
+async function chanIds(c){
+  const k = 'ch:' + c.h;
+  if (tok[k] === null) return [];
+  const p = { part: 'contentDetails', playlistId: c.up, maxResults: 15 };
+  if (tok[k]) p.pageToken = tok[k];
+  const s = await yt('playlistItems', p);
+  tok[k] = s.nextPageToken || null;
+  return s.items.map(x => ({ id: x.contentDetails.videoId, strict: false }));
+}
+
+async function pull(){
+  const m = mode();
+  let jobs, fyTags = [];
+  if (m === 'custom') {
+    jobs = [...(fy.tags.length ? [searchIds('tags', fy.tags.map(t => '#' + t).join('|'), 'custom')] : []), ...fy.chans.map(chanIds)];
+  } else if (m === 'foryou') {
+    const pr = fy.chans.length ? await getProfile() : { tags: [] };
+    fyTags = pr.tags; fyLive = fyTags.length > 0;
+    if (!fyTags.length) jobs = [searchIds('q', 'funny #shorts', false)];
+    else {
+      let q, k, tries = 0;
+      do { q = pick3(pr.tags, pr.w).map(t => '#' + t).join(' '); k = 'fy:' + q; } while (tok[k] === null && ++tries < 8);
+      jobs = [searchIds(k, q, 'foryou', { publishedAfter: new Date(Date.now() - YEAR).toISOString() })];
+    }
+  } else if (m === 'search') {
+    jobs = [searchIds('s', query + ' #shorts', false)];
+  } else {
+    jobs = [searchIds('q', topics[topic][1] + ' #shorts', false)];
+  }
+  const res = await Promise.allSettled(jobs);
+  const ok = res.filter(r => r.status === 'fulfilled');
+  if (!ok.length) throw res[0].reason;
+  const pick = new Map();
+  ok.flatMap(r => r.value).forEach(x => { if (x.id && !seen.has(x.id) && !pick.has(x.id)) pick.set(x.id, x.strict); });
+  const ids = [...pick.keys()], fresh = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const v = await yt('videos', { part: 'snippet,contentDetails,statistics,status', id: ids.slice(i, i + 50).join(',') });
+    v.items.forEach(x => {
+      const d = secs(x.contentDetails.duration);
+      if (!d || d > 180 || x.status?.embeddable === false) return;
+      const sm = pick.get(x.id);
+      if (sm === 'custom') {
+        const txt = (x.snippet.title + ' ' + x.snippet.description).toLowerCase();
+        const tg = (x.snippet.tags || []).map(t => t.toLowerCase().replace(/\s+/g, ''));
+        if (!fy.tags.some(t => txt.includes('#' + t) || tg.includes(t))) return;
+      }
+      if (sm === 'foryou') {
+        if (Date.now() - Date.parse(x.snippet.publishedAt) > YEAR || +(x.statistics.viewCount || 0) < MIN_VIEWS) return;
+        const have = new Set(tagsOf(x.snippet));
+        if (fyTags.filter(t => have.has(t)).length < Math.min(fyMin, fyTags.length)) return;
+      }
+      fresh.push({ id: x.id, title: x.snippet.title, channel: x.snippet.channelTitle, chId: x.snippet.channelId, likes: +(x.statistics.likeCount || 0) });
+    });
+  }
+  ids.forEach(id => seen.add(id));
+  if (m === 'custom' || m === 'foryou') shuffle(fresh);
+  addSlides(fresh);
+  return fresh.length;
+}
+
+async function load(more){
+  if (loading || !key) return;
+  if (!more && mode() === 'custom' && !custom()) { say('Nothing customized yet. Tap the sliders button to add hashtags and @channels.'); return; }
+  loading = true;
+  if (!more && mode() === 'foryou' && !fy.chans.length) toast('Add channels with the sliders button to personalize For you');
+  if (!more) { tok = {}; say('Loading giggles…'); }
+  try {
+    for (;;) {
+      for (let n = 0; n < 3; n++) { if ((await pull()) || !hasMore()) break; }
+      if (items.length || mode() !== 'foryou' || !fyLive || fyMin <= 1) break;
+      fyMin--; toast('Few matches, loosening to ' + fyMin + '+ shared hashtags');
+    }
+    if (!items.length) say({ custom: 'No matches yet. Try more hashtags or channels.', foryou: 'Nothing matched your interests yet. Try adding more channels.', search: 'No Shorts found for \u201c' + query + '\u201d.' }[mode()] || 'No Shorts found for this topic. Try another one.');
+    else say('');
+  } catch (e) {
+    if (!items.length) say('YouTube said: ' + e.message + ' Tap the key icon to change your key.');
+    else toast(e.message.slice(0, 60));
+  }
+  loading = false;
+}
+
+/* ---------- feed ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { const i = +e.target.dataset.i; clearTimeout(actTimer); actTimer = setTimeout(() => activate(i), 180); }
+}), { root: feed, threshold: .7 });
+
+function addSlides(list){
+  list.forEach(v => {
+    const i = items.push(v) - 1;
+    const el = document.createElement('section');
+    el.className = 'slide'; el.dataset.i = i;
+    el.style.setProperty('--bg', `url(https://i.ytimg.com/vi/${v.id}/hqdefault.jpg)`);
+    el.innerHTML = `<div class="bg"></div><div class="pl"></div><div class="tap"></div>
+      <div class="meta"><a target="_blank" rel="noopener"></a><p></p></div>
+      <div class="rail">
+        <button class="act" data-a="like"><span class="ic">${I.laugh}</span><small></small></button>
+        <button class="act" data-a="chat"><span class="ic">${I.chat}</span><small>Chat</small></button>
+        <button class="act" data-a="share"><span class="ic">${I.share}</span><small>Share</small></button>
+      </div>`;
+    const a = el.querySelector('.meta a');
+    a.textContent = '@' + v.channel; a.href = 'https://www.youtube.com/channel/' + v.chId;
+    el.querySelector('.meta p').textContent = v.title;
+    paintLike(el, v);
+    feed.appendChild(el); io.observe(el);
+  });
+}
+function paintLike(el, v){
+  const on = liked.has(v.id), b = el.querySelector('[data-a=like]');
+  b.classList.toggle('on', on);
+  b.querySelector('small').textContent = fmt.format(v.likes + (on ? 1 : 0));
+}
+function reset(){
+  unmount(); cur = -1; items = []; seen.clear(); tok = {}; fyRot = 0; fyMin = 3; fyLive = false; feed.innerHTML = ''; feed.scrollTop = 0; bar.style.width = 0;
+  load();
+}
+
+feed.addEventListener('click', e => {
+  if (suppress) return;
+  const slide = e.target.closest('.slide'); if (!slide) return;
+  const v = items[+slide.dataset.i];
+  const act = e.target.closest('.act');
+  if (act) {
+    const a = act.dataset.a;
+    if (a === 'like') { liked.has(v.id) ? liked.delete(v.id) : liked.add(v.id); store.set('gg_liked', JSON.stringify([...liked])); paintLike(slide, v); }
+    if (a === 'chat') openComments(v);
+    if (a === 'share') { const url = 'https://www.youtube.com/shorts/' + v.id; (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Link copied'), () => toast(url)); }
+    return;
+  }
+  if (e.target.closest('.tap')) { if ($('#sheet').classList.contains('show')) closeComments(); else togglePause(slide); }
+});
+
+/* ---------- comments ---------- */
+async function openComments(v){
+  const sheet = $('#sheet'), body = $('#shBody');
+  sheet.dataset.v = v.id; sheet.classList.add('show'); body.scrollTop = 0; body.textContent = 'Loading comments…';
+  try {
+    const j = await yt('commentThreads', { part: 'snippet', videoId: v.id, maxResults: 20, order: 'relevance', textFormat: 'plainText' });
+    if (sheet.dataset.v !== v.id) return;
+    body.textContent = '';
+    if (!j.items.length) { body.textContent = 'No comments yet.'; return; }
+    j.items.forEach(t => {
+      const c = t.snippet.topLevelComment.snippet;
+      const d = document.createElement('div'); d.className = 'cm';
+      const a = document.createElement('b'); a.textContent = c.authorDisplayName;
+      const p = document.createElement('p'); p.textContent = c.textDisplay;
+      d.append(a, p);
+      if (c.likeCount) { const s = document.createElement('small'); s.textContent = fmt.format(c.likeCount) + ' likes'; d.append(s); }
+      body.append(d);
+    });
+  } catch (e) {
+    if (sheet.dataset.v === v.id) body.textContent = /disabled/i.test(e.message) ? 'Comments are turned off for this video.' : e.message;
+  }
+}
+function closeComments(){ $('#sheet').classList.remove('show'); $('#sheet').dataset.v = ''; }
+
+function togglePause(slide){
+  if (!player || +slide.dataset.i !== cur) return;
+  if (player.getPlayerState() === 1) { player.pauseVideo(); }
+  else { player.playVideo(); }
+}
+
+/* ---------- player ---------- */
+function activate(i){
+  if (i === cur) return;
+  closeComments();
+  mount(i);
+  if (i >= items.length - 3 && hasMore()) load(true);
+}
+function unmount(){
+  if (player) { try { player.destroy() } catch {} player = null; }
+  const old = feed.children[cur];
+  if (old) { old.querySelector('.pl').innerHTML = ''; old.classList.remove('on'); }
+}
+function mount(i){
+  if (!ytReady) { pending = i; return; }
+  pending = null;
+  unmount(); cur = i;
+  const slide = feed.children[i]; if (!slide) return;
+  const d = document.createElement('div');
+  slide.querySelector('.pl').appendChild(d);
+  player = new YT.Player(d, {
+    width: '100%', height: '100%', videoId: items[i].id,
+    playerVars: { autoplay: 1, mute: 1, controls: 0, playsinline: 1, rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, origin: location.origin, widget_referrer: location.href },
+    events: {
+      onReady: e => { applyMute(); e.target.playVideo(); },
+      onStateChange: e => { if (e.data === 1) slide.classList.add('on'); if (e.data === 0) ended(i); },
+      onError: e => fail(i, e.data)
+    }
+  });
+}
+function ended(i){
+  if (i !== cur || !player) return;
+  if (auto && i + 1 < items.length) feed.scrollTo({ top: (i + 1) * feed.clientHeight, behavior: 'smooth' });
+  else { player.seekTo(0); player.playVideo(); }
+}
+function fail(i, code){
+  if (i !== cur) return;
+  toast(code === 153 ? 'Embed blocked. Serve this file from localhost.' : "Can't play this one. Skipping.");
+  setTimeout(() => { if (cur === i) feed.scrollTo({ top: (i + 1) * feed.clientHeight, behavior: 'smooth' }); }, 1300);
+}
+function applyMute(){
+  if (player && player.mute) muted ? player.mute() : player.unMute();
+  $('#snd').innerHTML = muted ? I.off : I.on;
+}
+function toggleMute(){ muted = !muted; applyMute(); }
+
+setInterval(() => {
+  if (!player || !player.getDuration) return;
+  try { const d = player.getDuration(); if (d) bar.style.width = (player.getCurrentTime() / d * 100) + '%'; } catch {}
+}, 200);
+
+/* ---------- controls ---------- */
+$('#snd').onclick = toggleMute;
+$('#cfg').onclick = openGate;
+$('#cancel').onclick = closeGate;
+$('#save').onclick = () => {
+  const k = $('#keyIn').value.trim(); if (!k) return;
+  key = k; store.set('gg_key', k); closeGate(); reset();
+};
+$('#keyIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#save').click(); });
+document.addEventListener('keydown', e => {
+  if (['#gate', '#fy', '#srch'].some(id => $(id).classList.contains('show'))) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); feed.scrollBy({ top: feed.clientHeight, behavior: 'smooth' }); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); feed.scrollBy({ top: -feed.clientHeight, behavior: 'smooth' }); }
+  if (e.key === ' ') { e.preventDefault(); const s = feed.children[cur]; if (s) togglePause(s); }
+  if (e.key.toLowerCase() === 'm') toggleMute();
+  if (e.key.toLowerCase() === 'h') toggleUI();
+});
+
+$('#snd').innerHTML = I.off; $('#cfg').innerHTML = I.key; $('#shX').innerHTML = I.x;
+$('#shX').onclick = closeComments;
+$('#fyBtn').innerHTML = I.tune;
+function toggleUI(){
+  const hidden = $('.stage').classList.toggle('clean');
+  $('#hideBtn').innerHTML = hidden ? I.eyeOff : I.eye;
+  if (hidden) closeComments();
+}
+$('#hideBtn').innerHTML = I.eye;
+function doSearch(){
+  const q = $('#srchIn').value.trim(); if (!q) return;
+  $('#srch').classList.remove('show');
+  if (!key) { openGate(); return; }
+  query = q; setTopic(-1);
+}
+$('#srchGo').onclick = doSearch;
+$('#srchX').onclick = () => $('#srch').classList.remove('show');
+$('#srchIn').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+$('#autoBtn').innerHTML = I.auto;
+$('#autoBtn').classList.toggle('on', auto);
+$('#autoBtn').onclick = () => {
+  auto = !auto; store.set('gg_auto', auto ? '1' : '0');
+  $('#autoBtn').classList.toggle('on', auto);
+  toast(auto ? 'Autoplay next: on' : 'Autoplay next: off');
+};
+
+/* hold the video for 2x speed */
+$('#spd').innerHTML = '2× ' + I.ff;
+let holdT = null, held = false, suppress = false;
+feed.addEventListener('pointerdown', e => {
+  if (!e.target.closest('.tap') || e.button > 0) return;
+  clearTimeout(holdT);
+  holdT = setTimeout(() => {
+    if (!player || !player.setPlaybackRate || player.getPlayerState() !== 1) return;
+    held = true; player.setPlaybackRate(2); $('#spd').classList.add('show');
+  }, 350);
+});
+function endHold(){
+  clearTimeout(holdT);
+  if (!held) return;
+  held = false; suppress = true; setTimeout(() => { suppress = false; }, 300);
+  try { player && player.setPlaybackRate(1); } catch {}
+  $('#spd').classList.remove('show');
+}
+document.addEventListener('pointerup', endHold);
+document.addEventListener('pointercancel', endHold);
+feed.addEventListener('contextmenu', e => e.preventDefault());
+$('#hideBtn').onclick = toggleUI;
+
+function renderFy(){
+  const box = $('#fyList'); box.innerHTML = '';
+  const mk = (label, cls, rm) => {
+    const p = document.createElement('span'); p.className = 'pill ' + cls; p.append(label);
+    const b = document.createElement('button'); b.innerHTML = I.x; b.title = 'Remove';
+    b.onclick = () => { rm(); saveFy(); renderFy(); };
+    p.append(b); box.append(p);
+  };
+  fy.tags.forEach(t => mk('#' + t, 'tag', () => { fy.tags = fy.tags.filter(x => x !== t); }));
+  fy.chans.forEach(c => mk('@' + c.h, 'ch', () => { fy.chans = fy.chans.filter(x => x.h !== c.h); }));
+}
+async function addFy(){
+  const inp = $('#fyIn'), parts = inp.value.split(/[\s,]+/).filter(Boolean);
+  if (!parts.length) return;
+  if (!key) return toast('Add your API key first');
+  const btn = $('#fyAdd'); btn.disabled = true; inp.value = '';
+  for (const raw of parts) {
+    if (raw[0] === '@') {
+      const h = raw.slice(1).toLowerCase();
+      if (!h || fy.chans.some(c => c.h === h)) continue;
+      try {
+        const c = (await yt('channels', { part: 'snippet,contentDetails', forHandle: h })).items?.[0];
+        if (!c) { toast('No channel @' + h); continue; }
+        fy.chans.push({ h, name: c.snippet.title, up: c.contentDetails.relatedPlaylists.uploads });
+      } catch (e) { toast(e.message.slice(0, 60)); continue; }
+    } else {
+      const t = raw.replace(/^#+/, '').toLowerCase().replace(/[^\p{L}\p{N}_]/gu, '');
+      if (!t || fy.tags.includes(t)) continue;
+      fy.tags.push(t);
+    }
+    saveFy(); renderFy();
+  }
+  btn.disabled = false;
+}
+$('#fyBtn').onclick = () => { renderFy(); $('#fy').classList.add('show'); setTimeout(() => $('#fyIn').focus(), 50); };
+$('#fyAdd').onclick = addFy;
+$('#fyIn').addEventListener('keydown', e => { if (e.key === 'Enter') addFy(); });
+$('#fyDone').onclick = () => {
+  $('#fy').classList.remove('show');
+  const changed = fyDirty || topic !== 1; fyDirty = false;
+  if (changed) setTopic(1);
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeComments(); });
+if (key) load(); else { say('Add a YouTube API key to start.'); openGate(); }
+</script>
+</body>
+</html>
